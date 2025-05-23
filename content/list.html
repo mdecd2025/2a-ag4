@@ -1,6 +1,6 @@
 <!DOCTYPE html><html>
         <head>
-        <title>cdproject</title>
+        <title>cd_hw</title>
         <meta charset="utf-8">
 <meta property="head" content="H1">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -131,7 +131,7 @@ img.add_border {
                             <li><a href="./../blog/index.html">blog</a></li>
                         </ul>
                       </li>
-                     <li><a href='About.html'>About</a><li class='has-children'><a href='Tutorial.html'>Tutorial</a><ul class='dropdown'><li><a href='Tutorial1.html'>Tutorial1</a><li><a href='Tutorial2.html'>Tutorial2</a></li></ul><li class='has-children'><a href='task.html'>task</a><ul class='dropdown'><li><a href='task1.html'>task1</a><li><a href='task2.html'>task2</a><li><a href='task3.html'>task3</a><li><a href='task4.html'>task4</a><li><a href='task5.html'>task5</a><li><a href='task6.html'>task6</a></li></ul><li><a href='w3.html'>w3</a><li class='has-children'><a href='Exam3.html'>Exam3</a><ul class='dropdown'><li><a href='3-1 video.html'>3-1 video</a><li><a href='3-2 video.html'>3-2 video</a><li><a href='3-3 video.html'>3-3 video</a><li><a href='reflections.html'>reflections</a></li></ul><li><a href='list.html'>list</a><li><a href='Final.html'>Final</a><li><a href='Brython.html'>Brython</a></li>
+                     <li><a href='About.html'>About</a><li class='has-children'><a href='Tutorial.html'>Tutorial</a><ul class='dropdown'><li><a href='Tutorial1.html'>Tutorial1</a><li><a href='Tutorial2.html'>Tutorial2</a></li></ul><li class='has-children'><a href='task.html'>task</a><ul class='dropdown'><li><a href='task1.html'>task1</a><li><a href='task2.html'>task2</a><li><a href='task3.html'>task3</a></li></ul><li><a href='w3.html'>w3</a><li class='has-children'><a href='Exam3.html'>Exam3</a><ul class='dropdown'><li><a href='3-1 video.html'>3-1 video</a><li><a href='3-2 video.html'>3-2 video</a><li><a href='3-3 video.html'>3-3 video</a><li><a href='reflections.html'>reflections</a></li></ul><li><a href='list.html'>list</a><li><a href='Final.html'>Final</a><li><a href='Brython.html'>Brython</a></li>
                       </ul>
                 </nav>
               </div>
@@ -158,53 +158,9 @@ img.add_border {
 <p>41223134：<a href="https://github.com/mdecd2025/hw-41223134">https://github.com/mdecd2025/hw-41223134</a></p>
 <p>41223136：<a href="https://github.com/mdecd2025/hw-41223136">https://github.com/mdecd2025/hw-41223136</a> </p>
 <p>41223158：<a href="https://github.com/mdecd2025/hw-41223158">https://github.com/mdecd2025/hw-41223158</a></p>
-<hr/>
-<p>Brython-列出組員倉儲及網站<strong><a href="https://mdecd2025.github.io/2a-ag4/content/Brython.html?src=https://gist.githubusercontent.com/zhe41223118/090a231f6023298fe6c79d75c648919b/raw/fa0f0e27e983890ed8aad90e573017faa39c9f32/ag4-w1">連結</a></strong></p>
-<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">from browser import html, document, window
-  
-# 定義資料來源 URL
-url = "https://mde.tw/list/2a.txt"
-  
-# 定義要查找的學號列表
-target_ids = ["41223118", "41223122", "41223131", "41223134", "41223136", "41223158"]
-  
-# 顯示學員數量
-print("正在處理...")
-  
-# 取得 HTML 中的元素 id 為 "brython_div1"
-brython_div1 = document["brython_div1"]
-  
-# 使用 JavaScript 的 fetch API 來抓取資料
-def process_data(response_text):
-    # 將抓取到的資料分行
-    data = response_text.splitlines()
-  
-    # 跳過標題行，取得學員資料
-    all_stud = data[1:]
-  
-    # 逐行處理學員資料
-    for stud in all_stud:
-        # 假設學員資料的格式為 "學號 學員賬號"
-        student_info = stud.strip().split()  # 使用 split() 將每行分為學號和帳號
-        if len(student_info) == 2:  # 確保每行有學號和帳號
-            student_id = student_info[0].strip()  # 學號
-            student_account = student_info[1].strip()  # 學員賬號
-  
-            # 檢查學號是否在目標學號列表中
-            if student_id in target_ids:
-                # 創建 GitHub 和作業網站的超鏈接
-                github_link = f"https://github.com/mdecd2025/hw-{student_account}"
-                homework_link = f"https://mdecd2025.github.io/hw-{student_account}/"
-                  
-                # 顯示該學號的 GitHub 和作業網站
-                brython_div1 &lt;= html.A(student_id, href=github_link)  # 學號是 GitHub repo 連結
-                brython_div1 &lt;= " "  # 空格
-                brython_div1 &lt;= html.A("(repo)", href=homework_link)  # 作業網站的超鏈接標題為 (repo)
-                brython_div1 &lt;= html.BR()  # 換行
-  
-# 使用 JavaScript 的 fetch API 拉取資料
-window.fetch(url).then(lambda response: response.text()).then(process_data)
-</pre>
+<p></p>
+<p></p>
+<p></p>
 <p></p>
 <br />reflections << <a href='reflections.html'>Previous</a> <a href='Final.html'>Next</a> >> Final</div>
         
