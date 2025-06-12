@@ -1,0 +1,210 @@
+from controller import Robot, Keyboard, Receiver, GPS, Compass
+import math
+
+# === 常數設定 ===
+TIME_STEP = 32
+MAX_VELOCITY = 20.0
+ANGLE_STEP = 40 * math.pi / 180
+POSITION_M = ANGLE_STEP
+POSITION_K = 0.0
+DEG_PER_SEC = 10.0
+OMEGA = DEG_PER_SEC * math.pi / 180.0
+WHEEL_RADIUS = 0.1
+BOT_L = 0.471
+BOT_W = 0.376
+ROTATE_STEP_COUNT = 136
+TARGET_POSITION = [6.24, 6.06]  # x, z
+
+# === 裝置初始化 ===
+robot = Robot()
+keyboard = Keyboard()
+keyboard.enable(TIME_STEP)
+motor = robot.getDevice('motor1')
+sensor = robot.getDevice('motor1_sensor')
+sensor.enable(TIME_STEP)
+wheels = [robot.getDevice(f"wheel{i+1}") for i in range(4)]
+for wheel in wheels:
+    wheel.setPosition(float('inf'))
+    wheel.setVelocity(0)
+receiver = robot.getDevice('rcv')
+receiver.enable(TIME_STEP)
+gps = robot.getDevice("gps")
+gps.enable(TIME_STEP)
+compass = robot.getDevice("compass")
+compass.enable(TIME_STEP)
+
+# === 狀態變數 ===
+current_state = "allow_m"
+key_pressed = {'m': False, 'k': False, 'a': False, 'y': False}
+move_to_target = None
+rotation_counter = 0
+
+# === 工具函數 ===
+def calculate_heading(compass_vals):
+    return math.atan2(compass_vals[0], compass_vals[2])
+
+def calculate_angle_diff(target_angle, current_angle):
+    diff = target_angle - current_angle
+    while diff > math.pi:
+        diff -= 2 * math.pi
+    while diff < -math.pi:
+        diff += 2 * math.pi
+    return diff
+
+# === 主迴圈 ===
+while robot.step(TIME_STEP) != -1:
+    if receiver.getQueueLength() > 0:
+        msg = receiver.getString()
+        if msg == 'a':
+            current_state = "allow_m"
+        elif msg == 'm' and current_state == "allow_m":
+            motor.setPosition(POSITION_M)
+            current_state = "allow_k"
+        elif msg == 'k' and current_state == "allow_k":
+            motor.setPosition(POSITION_K)
+            current_state = "allow_m"
+        receiver.nextPacket()
+
+    key = keyboard.getKey()
+
+    # ==== 自動前進模式 ====
+    if key == ord('Y') or key == ord('y'):
+        if not key_pressed['y'] and move_to_target is None:
+            print("[Y] 開始旋轉 43.6 度")
+            move_to_target = "rotate"
+            rotation_counter = 0
+        key_pressed['y'] = True
+    else:
+        key_pressed['y'] = False
+
+    # ==== 手動方向鍵移動（中斷自動導航） ====
+    manual_control = False
+    if key in [Keyboard.UP, Keyboard.DOWN, Keyboard.LEFT, Keyboard.RIGHT,
+               ord('F'), ord('f'), ord('G'), ord('g')]:
+        move_to_target = None
+        manual_control = True
+
+        if key == Keyboard.UP:
+            for wheel in wheels:
+                wheel.setVelocity(MAX_VELOCITY)
+        elif key == Keyboard.DOWN:
+            for wheel in wheels:
+                wheel.setVelocity(-MAX_VELOCITY)
+        elif key == Keyboard.LEFT:
+            wheels[0].setVelocity(MAX_VELOCITY)
+            wheels[1].setVelocity(-MAX_VELOCITY)
+            wheels[2].setVelocity(MAX_VELOCITY)
+            wheels[3].setVelocity(-MAX_VELOCITY)
+        elif key == Keyboard.RIGHT:
+            wheels[0].setVelocity(-MAX_VELOCITY)
+            wheels[1].setVelocity(MAX_VELOCITY)
+            wheels[2].setVelocity(-MAX_VELOCITY)
+            wheels[3].setVelocity(MAX_VELOCITY)
+        elif key == ord('F') or key == ord('f'):
+            omega = OMEGA
+            r, L, W = WHEEL_RADIUS, BOT_L, BOT_W
+            w1 = (1/r) * (0 - 0 - (L+W)*omega)
+            w2 = (1/r) * (0 + 0 + (L+W)*omega)
+            w3 = (1/r) * (0 + 0 - (L+W)*omega)
+            w4 = (1/r) * (0 - 0 + (L+W)*omega)
+            wheels[0].setVelocity(w1)
+            wheels[1].setVelocity(w2)
+            wheels[2].setVelocity(w3)
+            wheels[3].setVelocity(w4)
+        elif key == ord('G') or key == ord('g'):
+            omega = -OMEGA
+            r, L, W = WHEEL_RADIUS, BOT_L, BOT_W
+            w1 = (1/r) * (0 - 0 - (L+W)*omega)
+            w2 = (1/r) * (0 + 0 + (L+W)*omega)
+            w3 = (1/r) * (0 + 0 - (L+W)*omega)
+            w4 = (1/r) * (0 - 0 + (L+W)*omega)
+            wheels[0].setVelocity(w1)
+            wheels[1].setVelocity(w2)
+            wheels[2].setVelocity(w3)
+            wheels[3].setVelocity(w4)
+    elif not manual_control:
+        for wheel in wheels:
+            wheel.setVelocity(0)
+
+    # ==== 其他快捷鍵 ====
+    if key == ord('P') or key == ord('p'):
+        pos = gps.getValues()
+        print(f"[座標] x={pos[0]:.2f}, z={pos[2]:.2f}")
+
+    if key == ord('Q') or key == ord('q'):
+        break
+
+    if key == ord('M') and not key_pressed['m'] and current_state == "allow_m":
+        motor.setPosition(POSITION_M)
+        current_state = "allow_k"
+    key_pressed['m'] = key == ord('M')
+
+    if key == ord('K') and not key_pressed['k'] and current_state == "allow_k":
+        motor.setPosition(POSITION_K)
+        current_state = "allow_m"
+    key_pressed['k'] = key == ord('K')
+
+    if key == ord('A') and not key_pressed['a']:
+        current_state = "allow_m"
+    key_pressed['a'] = key == ord('A')
+
+    # === 自動模式 ===
+    if move_to_target == "rotate":
+        if rotation_counter < ROTATE_STEP_COUNT:
+            omega = -OMEGA
+            r, L, W = WHEEL_RADIUS, BOT_L, BOT_W
+            w1 = (1/r) * (0 - 0 - (L+W)*omega)
+            w2 = (1/r) * (0 + 0 + (L+W)*omega)
+            w3 = (1/r) * (0 + 0 - (L+W)*omega)
+            w4 = (1/r) * (0 - 0 + (L+W)*omega)
+            wheels[0].setVelocity(w1)
+            wheels[1].setVelocity(w2)
+            wheels[2].setVelocity(w3)
+            wheels[3].setVelocity(w4)
+            rotation_counter += 1
+        else:
+            for wheel in wheels:
+                wheel.setVelocity(0)
+            print("✅ 旋轉完成 → 停止旋轉")
+            move_to_target = "wait_for_forward"
+
+    elif move_to_target == "wait_for_forward":
+        print("▶ 開始前進")
+        move_to_target = "forward"
+
+    elif move_to_target == "forward":
+        gps_pos = gps.getValues()
+        compass_vals = compass.getValues()
+        dx = TARGET_POSITION[0] - gps_pos[0]
+        dz = TARGET_POSITION[1] - gps_pos[2]
+        distance = math.hypot(dx, dz)
+
+        if distance > 0.1:
+            theta = calculate_heading(compass_vals)
+            angle_to_target = math.atan2(dz, dx)
+            angle_error = calculate_angle_diff(angle_to_target, theta)
+
+            if abs(angle_error) > 0.1:
+                vx = vy = 0
+                omega = -OMEGA if angle_error < 0 else OMEGA
+            else:
+                rel_dx = math.cos(-theta) * dx - math.sin(-theta) * dz
+                rel_dz = math.sin(-theta) * dx + math.cos(-theta) * dz
+                vx = 1.0 * rel_dz
+                vy = 1.0 * rel_dx
+                omega = 0
+
+            r, L, W = WHEEL_RADIUS, BOT_L, BOT_W
+            w1 = (1/r) * (vx - vy - (L+W)*omega)
+            w2 = (1/r) * (vx + vy + (L+W)*omega)
+            w3 = (1/r) * (vx + vy - (L+W)*omega)
+            w4 = (1/r) * (vx - vy + (L+W)*omega)
+            wheels[0].setVelocity(w1)
+            wheels[1].setVelocity(w2)
+            wheels[2].setVelocity(w3)
+            wheels[3].setVelocity(w4)
+        else:
+            for wheel in wheels:
+                wheel.setVelocity(0)
+            print("🎯 抵達目標點！")
+            move_to_target = None
